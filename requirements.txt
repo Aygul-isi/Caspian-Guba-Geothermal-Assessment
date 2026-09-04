@@ -1,0 +1,12 @@
+pandas>=1.5
+numpy>=1.23
+matplotlib>=3.6
+scipy>=1.9
+pyproj>=3.4
+gstools>=1.4
+scikit-learn>=1.1
+geopandas>=0.12
+plotly>=5.10
+cartopy>=0.21
+CoolProp>=6.4
+openpyxl>=3.0
