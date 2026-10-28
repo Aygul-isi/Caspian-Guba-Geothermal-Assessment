@@ -9,7 +9,7 @@ Monte Carlo calculation and writes a detailed results table
 separator temperature, etc.).
 
 electrical_potential_figure.py and energy_map.py only need a compact
-summary (well name, coordinates, median power, 90% CI, household
+summary (well name, coordinates, median power, 90% uncertainty interval, household
 equivalent). This script performs that column selection/renaming so the
 two figure scripts have a single, clearly named input file to read,
 instead of each guessing at the detailed table's column names.

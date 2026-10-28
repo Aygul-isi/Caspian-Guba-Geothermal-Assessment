@@ -26,6 +26,7 @@ Run the scripts in this order. Each stage's output feeds the next.
 
 | Step | Script | Input | Output |
 |---|---|---|---|
+| 0 | `scripts/study_area_map.py` | `data/caspian_guba_boundary.shp` | `outputs/study_area_map.png` |
 | 1 | `scripts/temperature_model_trend_kriging.py` | `data/temperature_observations.xlsx`, `data/well_names.xlsx`, `data/discharge_rate_intervals.xlsx`, `data/caspian_guba_boundary.shp` | `outputs/3d_geothermal_temperature_model_trend_kriging.html`, `outputs/temperature_trend_kriging_model.npz`, `outputs/validation_report_temperature_trend.txt` |
 | 2 | `scripts/discharge_rate_model_kriging.py` | `data/discharge_rate_intervals.xlsx`, `data/well_names.xlsx`, `data/caspian_guba_boundary.shp` | `outputs/3d_discharge_rate_model_kriging.html`, `outputs/discharge_rate_kriging_model.npz`, `outputs/validation_report_discharge_rate.txt` |
 | 3 | `scripts/conductivity_figures.py` | `data/hydraulic_conductivity_tests.xlsx` | `outputs/FigureA_conductivity_overview.png`, `outputs/FigureB_conductivity_transect.png`, `outputs/FigureC_correlation_structure.png`, `outputs/conductivity_zonal_statistics.txt` |
@@ -34,11 +35,13 @@ Run the scripts in this order. Each stage's output feeds the next.
 | 6 | `scripts/electrical_potential_figure.py` | `outputs/energy_map_data.csv` (from step 5) | `outputs/Figure_geothermal_electrical_potential.png` |
 | 7 | `scripts/energy_map.py` | `outputs/energy_map_data.csv` (from step 5) | `outputs/Figure6_energy_map_corrected.png` |
 
-Steps 1–3 (temperature, discharge rate, hydraulic conductivity) are
+Step 0 (study-area map) is optional and independent of the rest of the
+pipeline. Steps 1–3 (temperature, discharge rate, hydraulic conductivity) are
 independent of one another and can be run in any order. Steps 4–7 must run
 in sequence, since each depends on the previous step's output.
 
 ```bash
+python scripts/study_area_map.py
 python scripts/temperature_model_trend_kriging.py
 python scripts/discharge_rate_model_kriging.py
 python scripts/conductivity_figures.py
@@ -56,7 +59,7 @@ so the relative `data/` and `outputs/` paths resolve correctly.
 ```
 .
 ├── data/            # input spreadsheets and boundary shapefile (see below) - not tracked in this repo, see "Data" section
-├── scripts/          # the seven pipeline scripts described above
+├── scripts/          # the eight scripts described above (study-area map + seven pipeline steps)
 ├── outputs/          # created automatically; all figures, HTML models, and result tables are written here
 ├── requirements.txt
 └── README.md
