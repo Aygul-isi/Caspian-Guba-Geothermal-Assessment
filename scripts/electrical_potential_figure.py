@@ -2,9 +2,9 @@
 =============================================================================
 Geothermal Electrical Potential of Wells Exceeding 100 C - Figure
 =============================================================================
-Reproduces the 3-panel figure:
-  (a) Net electrical power per well (single-flash cycle), horizontal bar
-      chart with 90% confidence interval, colored by field, sorted
+Reproduces the 3-panel figure (Figure 7 of the manuscript):
+  (a) Gross electrical output per well (single-flash cycle), horizontal bar
+      chart with 90% uncertainty interval, colored by field, sorted
       descending, with "kW / households" labels.
   (b) T-s (temperature-entropy) diagram of the single-flash cycle for the
       flagship well (Yalama-1): 1 reservoir -> 2 flash (isenthalpic) ->
@@ -13,13 +13,14 @@ Reproduces the 3-panel figure:
       CoolProp (not approximated), so the flash quality at the separator
       comes out at x = 8.1% for a 130 C reservoir / 86 C separator, exactly
       matching the original figure.
-  (c) Spatial distribution of electrical power (marker size and color both
-      proportional to power).
+  (c) Spatial distribution of gross electrical output (marker size and
+      color both proportional to output).
 
 Data source: energy_map_data.csv (Well, Lat, Lon, Energy_kWh,
 Energy_CI_low_kWh, Energy_CI_high_kWh, Household_count) - this is the same
 underlying dataset used for the energy contour map (energy_map.py); here
-"Energy_kWh" is read as the single-flash net electrical power in kW.
+"Energy_kWh" is read as the single-flash gross electrical output in kW
+(generator terminals; auxiliary plant loads are not subtracted).
 
 Household equivalent: households = power_kW * 24 / 7.12
 (7.12 kWh/household/day, CEIC 2023 residential consumption figure).
@@ -102,7 +103,7 @@ fig = plt.figure(figsize=(14, 13), dpi=130)
 gs = gridspec.GridSpec(2, 2, height_ratios=[1.35, 1], hspace=0.32, wspace=0.28)
 
 # ---------------------------------------------------------------------
-# (a) Electrical power per well - horizontal bar chart with 90% CI
+# (a) Gross output per well - horizontal bar chart with 90% uncertainty interval
 # ---------------------------------------------------------------------
 axA = fig.add_subplot(gs[0, :])
 y = np.arange(len(df_sorted))
@@ -121,9 +122,9 @@ for yi, r in zip(y, df_sorted.itertuples()):
 
 axA.set_yticks(y)
 axA.set_yticklabels(df_sorted['DisplayName'], fontsize=9.5)
-axA.set_xlabel('Net electrical power (kW)', fontsize=11)
+axA.set_xlabel('Gross electrical output (kW)', fontsize=11)
 axA.set_xlim(0, df_sorted['CI_high'].max() * 1.4)
-axA.set_title('(a) Electrical power per well \u2014 single-flash cycle, median with 90% confidence interval',
+axA.set_title('(a) Gross electrical output per well \u2014 single-flash cycle, median with 90% uncertainty interval',
               fontsize=11.5, loc='left')
 axA.grid(axis='x', alpha=0.25, ls='--')
 for s_ in ['top', 'right']:
@@ -189,7 +190,7 @@ axB.legend(loc='upper left', fontsize=8.5, frameon=True)
 axB.grid(alpha=0.2, ls='--')
 
 # ---------------------------------------------------------------------
-# (c) Spatial distribution of electrical power
+# (c) Spatial distribution of gross electrical output
 # ---------------------------------------------------------------------
 axC = fig.add_subplot(gs[1, 1])
 sizes = 40 + (df['Power_kW'] / df['Power_kW'].max()) * 500
@@ -199,16 +200,16 @@ for _, r in df.iterrows():
     axC.annotate(r['DisplayName'], (r['Lon'], r['Lat']), fontsize=7.5,
                  xytext=(5, 4), textcoords='offset points', color='#333')
 cbar = plt.colorbar(scC, ax=axC, shrink=0.85, pad=0.02)
-cbar.set_label('Electrical power (kW)', fontsize=10, rotation=270, labelpad=16)
+cbar.set_label('Gross electrical output (kW)', fontsize=10, rotation=270, labelpad=16)
 axC.set_xlabel('Longitude (\u00b0E)', fontsize=10.5)
 axC.set_ylabel('Latitude (\u00b0N)', fontsize=10.5)
-axC.set_title('(c) Spatial distribution of electrical power, symbol size \u221d power',
+axC.set_title('(c) Spatial distribution of gross electrical output, symbol size \u221d output',
               fontsize=11.5, loc='left')
 axC.grid(alpha=0.25, ls='--')
 
 fig.suptitle(
     'Geothermal Electrical Potential of Wells Exceeding 100 \u00b0C, Caspian\u2013Guba Region\n'
-    f'Single-flash cycle, condenser {CONDENSER_T_C:.0f} \u00b0C \u00b7 regional total '
+    f'Single-flash cycle, condenser {CONDENSER_T_C:.0f} \u00b0C \u00b7 regional gross output '
     f'{total_power_MW:.2f} MW \u2248 {total_households:,} households '
     f'({KWH_PER_HOUSEHOLD_DAY:.2f} kWh day\u207b\u00b9, CEIC 2023)',
     fontsize=14.5, y=0.995)

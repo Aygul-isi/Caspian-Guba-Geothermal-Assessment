@@ -47,7 +47,14 @@ HOUSEHOLD EQUIVALENT: based on CEIC 2023 statistics, 7.12 kWh/day
 
 UNCERTAINTY: Monte Carlo (n=20,000) - temperature measurement uncertainty
   +/-1 degC, discharge-rate measurement uncertainty +/-10% (relative).
-  Results are reported as the median and the 90% confidence interval.
+  The two inputs are sampled independently from normal distributions
+  (sigma = 1 degC and 10% of the measured value). Results are reported as
+  the median and the 90% uncertainty interval (5th-95th percentiles of the
+  simulated power). The random seed of each well is derived from its label
+  with zlib.crc32, so the results are identical on every run.
+
+GROSS OUTPUT: P_elec is the electrical output at the generator terminals.
+  Auxiliary (parasitic) plant loads are not subtracted.
 
 Output: energy_flash_results.csv, FigureD_energy_results.png (300 dpi)
 
@@ -56,6 +63,7 @@ Required libraries: pip install CoolProp matplotlib pandas openpyxl
 """
 
 import os
+import zlib
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -165,7 +173,9 @@ for _, r in df.iterrows():
     m_total = Qd * rho_f(T1) / 86400.0
     P_det = m_total * w_spec
 
-    rng = np.random.default_rng(abs(hash(r['Label'])) % (2**32))
+    # Fixed per-well seed: Python's built-in hash() of a string changes
+    # between interpreter sessions, whereas crc32 is deterministic.
+    rng = np.random.default_rng(zlib.crc32(r['Label'].encode('utf-8')))
     T1_s = np.clip(rng.normal(T1, TEMP_UNC_C, N_MC), T_COND + 12, 220)
     Q_s = np.clip(rng.normal(Qd, Qd * DEBIT_UNC_REL, N_MC), 1, None)
 
@@ -201,8 +211,9 @@ tot_p50 = res['P_elec_kW_p50'].sum()
 tot_p5, tot_p95 = res['P_elec_kW_p5'].sum(), res['P_elec_kW_p95'].sum()
 tot_h = res['Households_p50'].sum()
 print(f"\n{'='*72}")
-print(f"REGIONAL TOTAL: {tot_p50:,.0f} kW ({tot_p50/1000:.2f} MW), "
-      f"90% CI {tot_p5:,.0f}-{tot_p95:,.0f} kW")
+print(f"REGIONAL TOTAL (gross): {tot_p50:,.0f} kW ({tot_p50/1000:.2f} MW), "
+      f"90% uncertainty interval {tot_p5:,.0f}-{tot_p95:,.0f} kW "
+      f"(sum of per-well percentiles - fully correlated errors, conservative)")
 print(f"                {tot_p50*8760/1000:,.0f} MWh/year | ~{tot_h:,.0f} households")
 print(f"{'='*72}")
 print("\n-> outputs/energy_flash_results.csv")
@@ -214,7 +225,7 @@ print("\nPreparing figure...")
 fig = plt.figure(figsize=(15, 10), dpi=130)
 gs = gridspec.GridSpec(2, 2, height_ratios=[1.15, 1], hspace=0.32, wspace=0.24)
 
-# --- (a) Power per well, sorted, with 90% CI ---
+# --- (a) Gross output per well, sorted, with 90% uncertainty interval ---
 ax1 = fig.add_subplot(gs[0, :])
 y = np.arange(len(res))[::-1]
 cols = [ZONE_COLORS.get(z, '#777777') for z in res['Zone']]
@@ -228,9 +239,9 @@ for yi, (p, hi, hh_) in enumerate(zip(res['P_elec_kW_p50'], res['P_elec_kW_p95']
     ax1.text(hi + res['P_elec_kW_p95'].max() * 0.015, y[yi], f"{p:,.0f} kW  ·  {hh_:,.0f} households",
              va='center', fontsize=8.5, color='#333')
 ax1.set_yticks(y); ax1.set_yticklabels(res['Well'], fontsize=9)
-ax1.set_xlabel('Net electrical power (kW)', fontsize=11)
+ax1.set_xlabel('Gross electrical output (kW)', fontsize=11)
 ax1.set_xlim(0, res['P_elec_kW_p95'].max() * 1.30)
-ax1.set_title('(a) Electrical power per well — single-flash cycle, median with 90 % confidence interval',
+ax1.set_title('(a) Gross electrical output per well — single-flash cycle, median with 90 % uncertainty interval',
               fontsize=11, loc='left')
 ax1.grid(axis='x', alpha=0.25, ls='--')
 for s in ['top', 'right']:
@@ -291,10 +302,10 @@ for _, r in res.iterrows():
     ax3.annotate(r['Well'], (r['Lon'], r['Lat']), fontsize=7, xytext=(5, 5),
                  textcoords='offset points', color='#333')
 cb3 = plt.colorbar(sc, ax=ax3, shrink=0.85)
-cb3.set_label('Electrical power (kW)', fontsize=9)
+cb3.set_label('Gross electrical output (kW)', fontsize=9)
 ax3.set_xlabel('Longitude (°E)', fontsize=10)
 ax3.set_ylabel('Latitude (°N)', fontsize=10)
-ax3.set_title('(c) Spatial distribution of electrical power, symbol size ∝ power',
+ax3.set_title('(c) Spatial distribution of gross electrical output, symbol size ∝ output',
               fontsize=11, loc='left')
 ax3.grid(alpha=0.25, ls='--')
 for s in ['top', 'right']:
@@ -302,7 +313,7 @@ for s in ['top', 'right']:
 
 fig.suptitle('Geothermal Electrical Potential of Wells Exceeding 100 °C, Caspian–Guba Region\n'
              f'Single-flash cycle, condenser {T_COND:.0f} °C · '
-             f'regional total {tot_p50/1000:.2f} MW ≈ {tot_h:,.0f} households '
+             f'regional gross output {tot_p50/1000:.2f} MW ≈ {tot_h:,.0f} households '
              f'({PER_HOUSEHOLD_KWH_DAY} kWh day⁻¹, CEIC 2023)',
              fontsize=13, y=0.985)
 fig.savefig('outputs/FigureD_energy_results.png', dpi=DPI_OUT, bbox_inches='tight')

@@ -110,7 +110,14 @@ column names in those two scripts to match.
   using IAPWS-97 water/steam properties via the CoolProp library.
   Uncertainty is propagated by Monte Carlo simulation (n = 20,000) from
   ±1 °C temperature and ±10% discharge-rate measurement uncertainty;
-  results are reported as medians with 90% confidence intervals.
+  results are reported as medians with 90% uncertainty intervals
+  (5th–95th percentiles). Values are gross electrical output at the
+  generator terminals; auxiliary plant loads are not subtracted.
+  The Monte Carlo seed of each well is fixed (zlib.crc32 of the well
+  label), so repeated runs give identical results. Per-well values may
+  differ from Table 3 of the manuscript by up to ±1 kW (median) and
+  ±2 kW (interval bounds), owing to Monte Carlo sampling; the regional
+  total (2.32 MW) is unchanged.
 
 Full derivations, equations, and references are given in the manuscript
 (Sections 3.2–3.6).
